@@ -1,8 +1,6 @@
 # Starlette Boilerplate Project
 
 [![Sourcery](https://img.shields.io/badge/Sourcery-refactored-blueviolet.svg)](https://sourcery.ai)
-![](https://github.com/accent-starlette/boilerplate/workflows/Test/badge.svg?branch=master)
-![](https://github.com/accent-starlette/boilerplate/workflows/Publish%20to%20ECR/badge.svg?branch=master)
 
 ## Getting Started
 
@@ -18,6 +16,8 @@ Up the container:
 docker-compose up
 ```
 
+## Migrations
+
 Setup your database by creating your first revision, you may need to add some missing imports:
 
 ```bash
@@ -30,6 +30,17 @@ Then apply it:
 ```bash
 docker-compose exec app sh
 alembic upgrade head
+```
+
+## Create Tables Without Migrations
+
+```python
+from app.db import metadata
+from app.settings import DATABASE_URL
+from sqlalchemy import create_engine
+engine = create_engine(str(DATABASE_URL))
+metadata.drop_all(engine)
+metadata.create_all(engine)
 ```
 
 ## Ready!!
@@ -87,13 +98,32 @@ The following will just paste into the python shell to
 save you copying each line.
 
 ```python
-from app.db import db
-from starlette_auth.tables import Scope, User
-scope = Scope(code="admin", description="Full administrators access")
-user = User(email='admin@example.com', first_name='Admin', last_name='User')
-user.set_password('password')
-user.scopes.append(scope)
-user.save()
+from app.db import metadata
+from app.settings import DATABASE_URL
+from sqlalchemy import create_engine
+from starlette_auth.tables import scope, user, user_scope
+from starlette_auth.utils.crypto import hash_password
+engine = create_engine(str(DATABASE_URL))
+ent1 = engine.execute(
+    user.insert().values(
+        email="admin@example.com",
+        first_name="Admin",
+        last_name="User",
+        password=hash_password("password")
+    )
+)
+ent2 = engine.execute(
+    scope.insert().values(
+        code="admin",
+        description="Full administrators access"
+    )
+)
+engine.execute(
+    user_scope.insert().values(
+        user_id=ent1.inserted_primary_key[0],
+        scope_id=ent2.inserted_primary_key[0]
+    )
+)
 ```
 
 ## Styles

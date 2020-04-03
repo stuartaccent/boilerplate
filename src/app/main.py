@@ -10,8 +10,9 @@ from starlette.middleware.sessions import SessionMiddleware
 from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 
-from app import admin, db, endpoints, globals, handlers, settings
+from app import admin, db, endpoints, events, globals, handlers, settings
 
+starlette_core.config.database_url = settings.DATABASE_URL
 starlette_admin.config.templates = globals.templates
 starlette_auth.config.templates = globals.templates
 
@@ -26,7 +27,6 @@ routes = [
 ]
 
 middleware = [
-    Middleware(starlette_core.middleware.DatabaseMiddleware),
     Middleware(CORSMiddleware, allow_origins=settings.ALLOWED_HOSTS),
     Middleware(SessionMiddleware, secret_key=settings.SECRET_KEY),
     Middleware(AuthenticationMiddleware, backend=starlette_auth.ModelAuthBackend()),
@@ -42,7 +42,10 @@ app = Starlette(
     routes=routes,
     middleware=middleware,
     exception_handlers=exception_handlers,  # type: ignore
+    on_startup=[events.on_startup],
+    on_shutdown=[events.on_shutdown],
 )
+
 
 if settings.SENTRY_DSN:
     try:

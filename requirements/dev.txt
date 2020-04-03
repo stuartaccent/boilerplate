@@ -2,6 +2,7 @@
 
 autoflake
 black
+ipython
 isort
 mypy
 pytest

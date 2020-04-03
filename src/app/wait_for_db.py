@@ -1,12 +1,11 @@
+import asyncio
 import sys
 import time
 
-from starlette_core.database import Database
-
-from app.db import db
+from app.db import database
 
 
-def connect():
+async def connect():
     sys.stdout.write("Attempting database connection...\n")
 
     retries: int = 30
@@ -16,7 +15,8 @@ def connect():
     for i in range(1, retries + 1):
         sys.stdout.write(f"Attempt {i}...\n")
         try:
-            conn = db.engine.connect()
+            await database.connect()
+            conn = True
             break
         except:
             i += 1
@@ -24,10 +24,10 @@ def connect():
 
     if conn:
         sys.stdout.write("Connected...\n")
-        conn.close()
+        await database.disconnect()
     else:
         sys.stderr.write("Failed to connect...\n")
 
 
 if __name__ == "__main__":
-    connect()
+    asyncio.run(connect())

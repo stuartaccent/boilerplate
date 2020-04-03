@@ -1,24 +1,16 @@
 from starlette_admin.forms import widgets
-from starlette_auth.tables import Scope, User
-from wtforms import fields, validators
-from wtforms_alchemy.fields import QuerySelectMultipleField
-
-from app.forms import ModelForm
+from wtforms import fields, form, validators
 
 
-def all_scopes():
-    return Scope.query.order_by("code")
+class ScopeForm(form.Form):
+    code = fields.StringField()
+    description = fields.StringField()
 
 
-class ScopeForm(ModelForm):
-    class Meta:
-        model = Scope
-
-
-class UserBaseForm(ModelForm):
-    class Meta:
-        model = User
-        only = ["first_name", "last_name", "email"]
+class UserBaseForm(form.Form):
+    first_name = fields.StringField()
+    last_name = fields.StringField()
+    email = fields.StringField()
 
 
 class UserCreateForm(UserBaseForm):
@@ -35,11 +27,4 @@ class UserCreateForm(UserBaseForm):
 
 
 class UserUpdateForm(UserBaseForm):
-    scopes = QuerySelectMultipleField(
-        query_factory=all_scopes, widget=widgets.HorizontalSelect()
-    )
-
-    class Meta:
-        model = User
-        only = ["first_name", "last_name", "email", "is_active"]
-        field_args = {"is_active": {"widget": widgets.CheckboxInput()}}
+    is_active = fields.BooleanField(widget=widgets.CheckboxInput())

@@ -1,6 +1,6 @@
+from databases import DatabaseURL
 from starlette.config import Config
 from starlette.datastructures import URL, CommaSeparatedStrings, Secret
-from starlette_core.database import DatabaseURL
 
 config = Config()
 

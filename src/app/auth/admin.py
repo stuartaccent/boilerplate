@@ -1,15 +1,18 @@
 import sqlalchemy as sa
 from starlette_admin import ModelAdmin
-from starlette_auth.tables import Scope, User
+from starlette_auth.tables import scope, user
+from starlette_auth.utils.crypto import hash_password
+from starlette_core.database import database
 from wtforms import form
 
-from .forms import ScopeForm, UserCreateForm, UserUpdateForm
+from app.auth.forms import ScopeForm, UserCreateForm, UserUpdateForm
 
 
 class ScopeAdmin(ModelAdmin):
     section_name = "Authentication"
     collection_name = "Scopes"
-    model_class = Scope
+    model_class = scope
+    object_str_function = lambda self: self["code"]
     list_field_names = ["code", "description"]
     create_form = ScopeForm
     update_form = ScopeForm
@@ -23,7 +26,8 @@ class ScopeAdmin(ModelAdmin):
 class UserAdmin(ModelAdmin):
     section_name = "Authentication"
     collection_name = "Users"
-    model_class = User
+    model_class = user
+    object_str_function = lambda self: self["email"]
     list_field_names = ["email", "first_name", "last_name"]
     paginate_by = 10
     order_enabled = True
@@ -38,18 +42,19 @@ class UserAdmin(ModelAdmin):
 
     @classmethod
     def get_search_results(cls, qs, term):
-        return qs.filter(
+        return qs.where(
             sa.or_(
-                User.email.like(f"%{term}%"),
-                User.first_name.like(f"%{term}%"),
-                User.last_name.like(f"%{term}%"),
+                user.c.email.ilike(f"%{term}%"),
+                user.c.first_name.ilike(f"%{term}%"),
+                user.c.last_name.ilike(f"%{term}%"),
             )
         )
 
     @classmethod
     async def do_create(cls, form, request):
-        instance = cls.model_class()
-        form.populate_obj(instance)
-        instance.set_password(form.password.data)
-        instance.save()
-        return instance
+        data = form.data.copy()
+        password = hash_password(form.password.data)
+        data.update({"password": password, "is_active": True})
+        del data["confirm_password"]
+        qs = cls.model_class.insert().values(**data)
+        return await database.execute(qs)

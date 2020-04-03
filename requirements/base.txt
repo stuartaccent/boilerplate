@@ -1,15 +1,15 @@
 # starlette dependencies
+aiofiles
 alembic
 gunicorn
-psycopg2-binary
 uvicorn
 
 # accent stuff
-git+https://github.com/accent-starlette/starlette-admin.git@master#egg=starlette-admin
-git+https://github.com/accent-starlette/starlette-auth.git@master#egg=starlette-auth
-git+https://github.com/accent-starlette/starlette-core.git@master#egg=starlette-core
-# git+https://github.com/accent-starlette/starlette-files.git@master#egg=starlette-files[s3]
+git+https://github.com/stuartaccent/starlette-admin.git@master#egg=starlette-admin
+git+https://github.com/stuartaccent/starlette-auth.git@master#egg=starlette-auth
+git+https://github.com/stuartaccent/starlette-core.git@master#egg=starlette-core
 
-# other..
+# other
+databases[postgresql]
 sentry-asgi
 wtforms-alchemy
